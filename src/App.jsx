@@ -23,12 +23,14 @@ function App() {
   const [map, setMap] = useState();
   const mapContainer = useRef();
   useEffect(() => {
+    const Amsterdam = {lon: 2, lat: 4};
     let map = tt.map({
       key: 'nLGbvV7o3kUqMaiDZ7YHDMwMecBmH3M6',
       container: mapContainer.current.id,
-      center: userLocation,
+      center: Amsterdam,
       zoom: 10,
       language: 'en-GB',
+      basePath: '/lbs/sdk',
     });
     map.addControl(new tt.FullscreenControl());
     map.addControl(new tt.NavigationControl());
@@ -40,10 +42,6 @@ function App() {
 
   return (
     <div className='container'>
-      <nav className='nav'>
-        <h1>Geofencing in React</h1>
-      </nav>
-
       <div ref={mapContainer} className='map' id='map' />
     </div>
   );
