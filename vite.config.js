@@ -24,20 +24,20 @@ const manifestForPlugIn = {
     orientation: 'portrait',
     // injectRegister: 'auto',
     // registerType: 'autoUpdate',
-    devOptions: {
-      enabled: true,
-    },
+    // devOptions: {
+    //   enabled: true,
+    // },
     // workbox: {
     //   globPatterns: ['**/*.{js,css,html,ico,png,svg}']
     // },
     // srcDir: "public",
-    filename: 'service-worker.js',
-    strategies: 'injectManifest',
-    injectRegister: false,
-    manifest: false,
-    injectManifest: {
-      injectionPoint: null,
-    },
+    // filename: 'service-worker.js',
+    // strategies: 'injectManifest',
+    // injectRegister: false,
+    // manifest: false,
+    // injectManifest: {
+    //   injectionPoint: null,
+    // },
   },
 };
 export default defineConfig({
