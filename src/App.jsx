@@ -4,13 +4,13 @@ import * as tt from '@tomtom-international/web-sdk-maps';
 import '@tomtom-international/web-sdk-maps/dist/maps.css';
 
 function App() {
-  const [userLocation, setUserLocation] = useState({lon: '', lat: ''});
+  const [userLocation, setUserLocation] = useState({lat: 0, lon: 0});
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
           const {latitude, longitude} = position.coords;
-          setUserLocation({lat: latitude, lon: longitude});
+          setUserLocation({lat: latitude + 10, lon: longitude + 10});
         },
         error => {
           console.error(error.message);
@@ -27,7 +27,7 @@ function App() {
     let map = tt.map({
       key: 'nLGbvV7o3kUqMaiDZ7YHDMwMecBmH3M6',
       container: mapContainer.current.id,
-      center: Amsterdam,
+      center: userLocation,
       zoom: 10,
       language: 'en-GB',
       basePath: '/lbs/sdk',
