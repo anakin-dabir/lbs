@@ -23,11 +23,14 @@ function App() {
   const [map, setMap] = useState();
   const mapContainer = useRef();
   useEffect(() => {
-    const Amsterdam = {lon: 2, lat: 4};
+    const AMSTERDAM = {
+      lon: 4.896029,
+      lat: 52.371807,
+    };
     let map = tt.map({
       key: 'nLGbvV7o3kUqMaiDZ7YHDMwMecBmH3M6',
       container: mapContainer.current.id,
-      center: userLocation,
+      center: AMSTERDAM,
       zoom: 10,
       language: 'en-GB',
       basePath: '/lbs/sdk',
