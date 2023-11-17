@@ -1,44 +1,44 @@
-import {clientsClaim} from 'workbox-core';
-import {ExpirationPlugin} from 'workbox-expiration';
-import {precacheAndRoute, createHandlerBoundToURL} from 'workbox-precaching';
-import {registerRoute} from 'workbox-routing';
-import {StaleWhileRevalidate} from 'workbox-strategies';
+// import {clientsClaim} from 'workbox-core';
+// import {ExpirationPlugin} from 'workbox-expiration';
+// import {precacheAndRoute, createHandlerBoundToURL} from 'workbox-precaching';
+// import {registerRoute} from 'workbox-routing';
+// import {StaleWhileRevalidate} from 'workbox-strategies';
 
-clientsClaim();
-precacheAndRoute(self.__WB_MANIFEST);
+// clientsClaim();
+// precacheAndRoute(self.__WB_MANIFEST);
 
-const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
-registerRoute(({request, url}) => {
-  if (request.mode !== 'navigate') {
-    return false;
-  }
+// const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
+// registerRoute(({request, url}) => {
+//   if (request.mode !== 'navigate') {
+//     return false;
+//   }
 
-  if (url.pathname.startsWith('/_')) {
-    return false;
-  }
+//   if (url.pathname.startsWith('/_')) {
+//     return false;
+//   }
 
-  if (url.pathname.match(fileExtensionRegexp)) {
-    return false;
-  }
+//   if (url.pathname.match(fileExtensionRegexp)) {
+//     return false;
+//   }
 
-  return true;
-}, createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html'));
+//   return true;
+// }, createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html'));
 
-registerRoute(
-  ({url}) => url.origin === self.location.origin && url.pathname.endsWith('.png'),
-  new StaleWhileRevalidate({
-    cacheName: 'images',
-    plugins: [new ExpirationPlugin({maxEntries: 50})],
-  })
-);
+// registerRoute(
+//   ({url}) => url.origin === self.location.origin && url.pathname.endsWith('.png'),
+//   new StaleWhileRevalidate({
+//     cacheName: 'images',
+//     plugins: [new ExpirationPlugin({maxEntries: 50})],
+//   })
+// );
 
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+// self.addEventListener('message', event => {
+//   if (event.data && event.data.type === 'SKIP_WAITING') {
+//     self.skipWaiting();
+//   }
+// });
 
-var doCache = true;
+var doCache = true; // Set this to true for production
 
 var CACHE_NAME = 'my-pwa-cache-v1';
 
@@ -67,7 +67,7 @@ self.addEventListener('install', function (event) {
             response.json();
           })
           .then(assets => {
-            const urlsToCache = ['/', assets['main.js']];
+            const urlsToCache = ['/'];
             cache.addAll(urlsToCache);
             console.log('cached');
           });
