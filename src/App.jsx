@@ -9,6 +9,12 @@ function App() {
   const admin_key = 'WWppeLthzPxP5UjKbXipqxKKoQ4O348tS2NDdp6QkgM7s4we';
   const project_id = '3a603903-ca43-462f-b4cc-f78e7389f5eb';
   const [userLocation, setUserLocation] = useState({lat: 0, lon: 0});
+  const [fence_id, set_fence_id] = useState('');
+  const [geofenceData] = useState({
+    object: 'my_driver',
+    fenceName: 'my_fence',
+    time: new Date().toISOString(),
+  });
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -24,7 +30,6 @@ function App() {
       console.error('Geolocation is not supported');
     }
   }, []);
-  const [map, setMap] = useState();
   const mapContainer = useRef();
   async function createGeofence(lng, lat) {
     const request = await axios({
@@ -43,6 +48,7 @@ function App() {
       }),
     });
     const response = await request.data;
+    console.log({response});
     return response.id;
   }
   useEffect(() => {
@@ -50,38 +56,29 @@ function App() {
       lon: 4.896029,
       lat: 52.371807,
     };
-    let tmap = tt.map({
+    let map = tt.map({
       key: api_key,
       container: mapContainer.current.id,
       center: AMSTERDAM,
       zoom: 10,
       language: 'en-GB',
-      basePath: '/lbs/sdk',
     });
-    tmap.addControl(new tt.FullscreenControl());
-    tmap.addControl(new tt.NavigationControl());
-    console.log({tmap: tmap});
-    setMap(tmap);
-    tmap.on('click', e => {
+    map.addControl(new tt.FullscreenControl());
+    map.addControl(new tt.NavigationControl());
+    map.on('click', e => {
       const {lng, lat} = e.lngLat;
-      // creating source data with turf.js
-
       const sourceID = `circleData ${Math.floor(Math.random() * 10000)}`;
       let center = turf.point([lng, lat]);
       let radius = 10;
       let options = {
         steps: 15,
         units: 'kilometers',
-
-        // or "mile"
       };
       let circle = turf.circle(center, radius, options);
-      tmap.addSource(sourceID, {
+      map.addSource(sourceID, {
         type: 'geojson',
         data: circle,
       });
-
-      //fetching and drawing the map
 
       Promise.all([createGeofence(lng, lat)]).then(result => {
         axios({
@@ -94,7 +91,7 @@ function App() {
           .then(response => response.data)
 
           .then(result => {
-            tmap.addLayer({
+            map.addLayer({
               id: `circle ${Math.floor(Math.random() * 10000)}`,
               type: 'fill',
               source: sourceID,
@@ -103,12 +100,49 @@ function App() {
                 'fill-opacity': 0.6,
               },
             });
+            console.log({result});
+            set_fence_id(result.id);
           });
       });
     });
 
+    function addMarker(lnglat) {
+      const marker = new tt.Marker({
+        draggable: true,
+      })
+        .setLngLat(lnglat)
+        .addTo(map);
+      function onDragEnd() {
+        var lngLat = marker.getLngLat();
+        new tt.Popup({
+          closeOnClick: false,
+        })
+
+          .setLngLat(lngLat)
+          .setHTML(
+            `<div>
+            <p> The object "
+${geofenceData.object}
+" crossed "
+${geofenceData.fenceName}
+" at 
+${geofenceData.time}
+</p>
+          </div>
+`
+          )
+
+          .addTo(map);
+
+        marker.on('dragend', onDragEnd);
+      }
+    }
+
+    map.on('click', e => {
+      addMarker(e.lngLat);
+    });
     return () => {
-      tmap.remove();
+      map.remove();
     };
   }, []);
 
