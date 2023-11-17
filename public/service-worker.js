@@ -58,6 +58,24 @@ self.addEventListener('activate', event => {
   );
 });
 
+self.addEventListener('install', function (event) {
+  if (doCache) {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then(function (cache) {
+        fetch('manifest.json')
+          .then(response => {
+            response.json();
+          })
+          .then(assets => {
+            const urlsToCache = ['/', assets['main.js']];
+            cache.addAll(urlsToCache);
+            console.log('cached');
+          });
+      })
+    );
+  }
+});
+
 self.addEventListener('fetch', function (event) {
   if (doCache) {
     event.respondWith(

@@ -120,20 +120,9 @@ function App() {
 
           .setLngLat(lngLat)
           .setHTML(
-            `<div>
-            <p> The object "
-${geofenceData.object}
-" crossed "
-${geofenceData.fenceName}
-" at 
-${geofenceData.time}
-</p>
-          </div>
-`
+            `<div><p> The object "${geofenceData.object}" crossed "${geofenceData.fenceName}" at ${geofenceData.time}</p></div>`
           )
-
           .addTo(map);
-
         marker.on('dragend', onDragEnd);
       }
     }
