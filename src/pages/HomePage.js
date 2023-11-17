@@ -4,7 +4,7 @@ import * as tt from '@tomtom-international/web-sdk-maps';
 import '@tomtom-international/web-sdk-maps/dist/maps.css';
 import * as turf from '@turf/turf';
 
-function App() {
+function HomePage() {
   const api_key = '8heklGGF5vF1b9RMUZZ2Rg2rlHTPB2ms';
   const admin_key = 'WWppeLthzPxP5UjKbXipqxKKoQ4O348tS2NDdp6QkgM7s4we';
   const project_id = '3a603903-ca43-462f-b4cc-f78e7389f5eb';
@@ -142,4 +142,4 @@ function App() {
   );
 }
 
-export default App;
+export default HomePage;

@@ -1,87 +1,131 @@
-// import {clientsClaim} from 'workbox-core';
-// import {ExpirationPlugin} from 'workbox-expiration';
-// import {precacheAndRoute, createHandlerBoundToURL} from 'workbox-precaching';
-// import {registerRoute} from 'workbox-routing';
-// import {StaleWhileRevalidate} from 'workbox-strategies';
+const version = 1,
+  name = `my-app-v${version}`,
+  timeout = 1800,
+  urls = [],
+  hosts = [],
+  reload = false,
+  safari = true,
+  announce = true,
+  cacheable = arg => (arg.includes('no-store') || arg.includes('max-age=0')) === false;
 
-// clientsClaim();
-// precacheAndRoute(self.__WB_MANIFEST);
+function log(arg) {
+  console.log(`[serviceWorker:${new Date().getTime()}] ${arg}`);
+}
 
-// const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
-// registerRoute(({request, url}) => {
-//   if (request.mode !== 'navigate') {
-//     return false;
-//   }
+if (safari || /Version\/[\d+\.]+ Safari/.test(navigator.userAgent) === false) {
+  self.addEventListener('activate', ev =>
+    ev.waitUntil(
+      caches
+        .keys()
+        .then(args => {
+          const invalid = args.filter(i => i !== name);
+          let result;
 
-//   if (url.pathname.startsWith('/_')) {
-//     return false;
-//   }
+          if (args.includes(name) === false) {
+            caches
+              .open(name)
+              .then(cache => {
+                log('type=activate, cached=false, message="Caching core assets"');
 
-//   if (url.pathname.match(fileExtensionRegexp)) {
-//     return false;
-//   }
-
-//   return true;
-// }, createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html'));
-
-// registerRoute(
-//   ({url}) => url.origin === self.location.origin && url.pathname.endsWith('.png'),
-//   new StaleWhileRevalidate({
-//     cacheName: 'images',
-//     plugins: [new ExpirationPlugin({maxEntries: 50})],
-//   })
-// );
-
-// self.addEventListener('message', event => {
-//   if (event.data && event.data.type === 'SKIP_WAITING') {
-//     self.skipWaiting();
-//   }
-// });
-
-var doCache = true; // Set this to true for production
-
-var CACHE_NAME = 'my-pwa-cache-v1';
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(keyList =>
-      Promise.all(
-        keyList.map(key => {
-          if (!cacheWhitelist.includes(key)) {
-            console.log('Deleting cache: ' + key);
-            return caches.delete(key);
+                return cache.addAll(urls);
+              })
+              .catch(err => log(`type=error, action=activate, message="${err.message}"`));
+          } else {
+            log('type=activate, cached=true, message="Reusing cached core assets"');
           }
+
+          if (announce) {
+            self.clients.claim();
+            self.clients
+              .matchAll()
+              .then(clients => clients.forEach(client => client.postMessage(`version_${version}`)));
+          }
+
+          if (invalid.length === 0) {
+            log('type=delete, message="No stale caches"');
+            result = Promise.resolve();
+          } else {
+            log(`type=delete, message="Stale caches: ${invalid.toString()}"`);
+            result = Promise.all(
+              invalid.map(i => {
+                log(`type=delete, message="Deleted stale cache ${i}"`);
+                caches.delete(i);
+
+                if (reload) {
+                  self.clients.claim();
+                  self.clients.matchAll().then(clients =>
+                    clients.forEach(client => {
+                      log('type=reload, message="Loading new version of application"');
+                      client.postMessage('reload');
+                    })
+                  );
+                }
+              })
+            );
+          }
+
+          return result;
         })
-      )
+        .catch(() => void 0)
     )
   );
-});
 
-self.addEventListener('install', function (event) {
-  if (doCache) {
-    event.waitUntil(
-      caches.open(CACHE_NAME).then(function (cache) {
-        fetch('manifest.json')
-          .then(response => {
-            response.json();
+  self.addEventListener('install', ev => {
+    self.skipWaiting();
+    ev.waitUntil(() => log('type=install, message="New service worker installed"'));
+  });
+
+  self.addEventListener('fetch', ev => {
+    const method = ev.request.method,
+      http = /^https?\:/.test(ev.request.url),
+      handle = hosts.length === 0 || hosts.includes(new URL(ev.request.url).hostname);
+    let result;
+
+    if (http && handle && method === 'GET') {
+      result = ev.respondWith(
+        caches
+          .open(name)
+          .then(cache => {
+            return cache.match(ev.request).then(cached => {
+              const now = new Date().getTime();
+              let lresult;
+
+              if (cached !== void 0) {
+                const url = new URL(cached.url),
+                  cdate = cached.headers.get('date'),
+                  then =
+                    (cdate !== null ? new Date(cdate) : new Date()).getTime() +
+                    Number(
+                      (cached.headers.get('cache-control') || '').replace(/[^\d]/g, '') || timeout
+                    ) *
+                      1e3;
+
+                if (urls.includes(url.pathname) || then > now) {
+                  lresult = cached.clone();
+                }
+              }
+
+              if (lresult === void 0) {
+                lresult = fetch(ev.request).then(res => {
+                  if (
+                    (res.type === 'basic' || res.type === 'cors') &&
+                    res.status === 200 &&
+                    cacheable(res.headers.get('cache-control') || '')
+                  ) {
+                    cache.put(ev.request, res.clone());
+                  }
+
+                  return res;
+                });
+              }
+
+              return lresult;
+            });
           })
-          .then(assets => {
-            const urlsToCache = ['/'];
-            cache.addAll(urlsToCache);
-            console.log('cached');
-          });
-      })
-    );
-  }
-});
+          .catch(() => void 0)
+      );
+    }
 
-self.addEventListener('fetch', function (event) {
-  if (doCache) {
-    event.respondWith(
-      caches.match(event.request).then(function (response) {
-        return response || fetch(event.request);
-      })
-    );
-  }
-});
+    return result;
+  });
+}
