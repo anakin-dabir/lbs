@@ -6,22 +6,24 @@ import './App.css';
 import React, {useState, useEffect, useRef} from 'react';
 
 const App = () => {
+  const [userLocation, setUserLocation] = useState([]);
+
   const api_key = '8heklGGF5vF1b9RMUZZ2Rg2rlHTPB2ms';
   const admin_key = 'WWppeLthzPxP5UjKbXipqxKKoQ4O348tS2NDdp6QkgM7s4we';
   const project_id = '3a603903-ca43-462f-b4cc-f78e7389f5eb';
-  const [userLocation, setUserLocation] = useState({lat: 0, lon: 0});
   const [fence_id, set_fence_id] = useState('');
   const [geofenceData] = useState({
     object: 'my_driver',
     fenceName: 'my_fence',
     time: new Date().toISOString(),
   });
-  useEffect(() => {
+  const getLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
           const {latitude, longitude} = position.coords;
-          setUserLocation({lat: latitude + 10, lon: longitude + 10});
+          console.log({latitude, longitude});
+          return {lat: latitude, lon: longitude};
         },
         error => {
           console.error(error.message);
@@ -30,7 +32,7 @@ const App = () => {
     } else {
       console.error('Geolocation is not supported');
     }
-  }, []);
+  };
   const mapContainer = useRef();
   async function createGeofence(lng, lat) {
     const request = await axios({
@@ -54,8 +56,8 @@ const App = () => {
   }
   useEffect(() => {
     const AMSTERDAM = {
-      lon: 4.896029,
-      lat: 52.371807,
+      lng: 74.3,
+      lat: 31.5,
     };
     let map = tt.map({
       key: api_key,
@@ -66,6 +68,8 @@ const App = () => {
     });
     map.addControl(new tt.FullscreenControl());
     map.addControl(new tt.NavigationControl());
+    const marker = new tt.Marker().setLngLat({lng: AMSTERDAM.lng, lat: AMSTERDAM.lat}).addTo(map);
+
     map.on('click', e => {
       const {lng, lat} = e.lngLat;
       const sourceID = `circleData ${Math.floor(Math.random() * 10000)}`;
@@ -129,6 +133,7 @@ const App = () => {
     }
 
     map.on('click', e => {
+      console.log(e.lngLat);
       addMarker(e.lngLat);
     });
     return () => {
